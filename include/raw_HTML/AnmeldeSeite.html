@@ -1,0 +1,32 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <title>Anmeldedaten eingeben</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name='author' content='Felix Girke'>
+    <link rel="icon" href='https://felixesptest.000webhostapp.com/Pic/MAMAAAA.ico'>
+    <style>
+        html {
+            font-family: Helvetica;
+            display: inline-block;
+            margin: 0px auto;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <a href='/'><button class="button" style='background-color:#27c227'>Zurueck</button></a>
+    <br> <br>
+    <p>Gib bitte den Benutzername und das Passwort ein:</p>
+    <br>
+    <form action='/send' method="POST">
+        Benutzername: <input type="text" name="Benutzername">
+        <br><br>
+        Passwort: <input type="password" name="Eingabe_Passwort"> <br> <br>
+        <input type="submit" value="Submit">
+    </form>
+    <br>
+</body>
+</html>
