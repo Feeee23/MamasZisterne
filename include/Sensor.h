@@ -1,14 +1,23 @@
 #include <Arduino.h>
-#include <SR04.h>
 
 int Trig=5; //Entspricht D1
 int Echo=4; //Entspricht D2 
-SR04 sr04= SR04(Trig, Echo);
+int Dauer;
+
+int Distance(){ //komunikation zum Sensor
+    digitalWrite(Trig, LOW);
+    delayMicroseconds(5);
+    digitalWrite(Trig, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(Trig, LOW);
+    Dauer = pulseIn(Echo, HIGH);
+    return Dauer*0.034/2;
+}
 
 int Sensor(){                            //Schuckt den Sensor an
-    int A = sr04.Distance(); //Messe dreimal hintereinander um Feler zu minimiern
-    int B = sr04.Distance();
-    int C = sr04.Distance();
+    int A = Distance(); //Messe dreimal hintereinander um Feler zu minimiern
+    int B = Distance();
+    int C = Distance();
     int D = (A + B + C) / 3; //Durchschnitt der 3 Werte ermitteln
     int F = 190 - D; //Die Höhe des Sensors (240cm) minus den Messwert ergibt den Füllstand
     if(F<0){
