@@ -80,7 +80,7 @@ String getDiagramWerte(struct Fuellstand* Liste ){ //Element ausgeben, bisher no
         k+=year(unix[i]);
         k+="', ";
         k+=liter[i]; //Liter
-        k+="],";
+        k+="],\n";
         s+=k;
         //Zielformat['19.09.2020', 200],
     }
@@ -91,7 +91,7 @@ String getTabellenWerte(struct Fuellstand* Liste ){ //Element ausgeben
     struct Fuellstand* F;
     F=Liste;
     while(F->next!=NULL){
-        String k="<tr><td style='border-top:hidden;border-bottom:hidden;border-left:hidden;'> </td><td> ";
+        String k="<tr>\n    <td style='border-top:hidden;border-bottom:hidden;border-left:hidden;'> </td>\n   <td> ";
         if (day(F->unix)<10){
             k+=0;
         }
@@ -116,11 +116,13 @@ String getTabellenWerte(struct Fuellstand* Liste ){ //Element ausgeben
         k+=0;
         }
         k+=minute(F->unix);
-        k+="</td><td>";
+        k+="</td>\n     <td>";
         k+=F->hoehe; //höhe
-        k+="cm</td><td>";
+        k+="cm</td>\n   <td>";
         k+=F->liter; //Liter
-        k+="l</td><td style='border-top:hidden;border-bottom:hidden;border-right:hidden;'> </td></tr>";
+        k+="l</td>\n    <td>";
+        k+=F->liter-F->next->liter; //delta zum vortag
+        k+="l</td>\n    <td style='border-top:hidden;border-bottom:hidden;border-right:hidden;'> </td></tr>\n";
         s+=k;
         //Zielformat
 //                <tr>
@@ -128,6 +130,7 @@ String getTabellenWerte(struct Fuellstand* Liste ){ //Element ausgeben
 //                    <td>19.09.2020 11:23</td>
 //                    <td> 135cm</td>
 //                    <td>4963l</td>
+//                    <td>150l</td> //delta Vortag
 //                    <td style='border-top:hidden;border-bottom:hidden;border-right:hidden;'> </td>
 //                </tr>
         F=F->next;
@@ -261,59 +264,57 @@ String getAdminValue(struct Fuellstand* Liste, int SpeicherPos){
 
 String getDurchschnitt(struct Fuellstand* Liste, int Fall){ //berechnet die durschnittlilche füllung und Verbrauch
     String s;//="unbekannt"; 
-    struct Fuellstand* F;
-    F=Liste;
-    float Zaehler=0.0;
-    float Summe=0.0;
-    float Durchschnitt=0.0;
-    int date=0;
-    int date2=0;
-    if(Fall==1){ //Verbrauch
-        date=F->unix;
-        while(F->next!=NULL){
-            
-            if((F->liter)<(F->next->liter)&&F->unix!=0){
-                Summe+=(F->next->liter)-(F->liter);
-                if(F->unix>0){
-                    date2=F->unix;
-                }
+    struct Fuellstand* F1;
+    struct Fuellstand* F2;
+    F1=Liste;
+    ////////////////////////////////////////////
+    int SumHinzu=0;
+    int SumWeg=0;
+    int AnzahlHinzu=0;
+    int AnzahlWeg=0;
+    F2=F1->next;
+    while(F2->next!=NULL){
+        if (hour(F1->unix)>0&&hour(F1->unix)<4){ //teste uhrzeit von F1
+            if (hour(F2->unix)>0&&hour(F2->unix)<4){ //teste uhrzeit von F2
+                if(F1->liter-F2->liter>0){ //wasser hinzu
+                    SumHinzu+=F1->liter-F2->liter>0;
+                    AnzahlHinzu++;
+                } else if (F1->liter-F2->liter<0){ // wasser weg
+                    SumWeg+=-(F1->liter-F2->liter); //negieren um positiven wert zu erhalten
+                    AnzahlWeg++;
+                } //sonderfall Wasser bleibt coonstant ist egal
+                F1=F2; //weiter setzten der Variiabeln
+                F2=F2->next;
+                continue;                
+            }else{
+                F2=F2->next; //setzte F2 eins weiter
+                continue;
             }
-            F=F->next;
-        }
-        int differenz =(int)(date-date2)/86400; //tagedifferenz
-        if(differenz>0){
-            Durchschnitt=Summe/differenz;
-            s+=(int)Durchschnitt;
-        }else{
-            s+= "keine Angabe moeglich ";
-        }
-        
+        } else{ //setzte F1 auf den nächsen und f2 auch und versuche es nochmal
+            F1=F2;
+            F2=F2->next;
+            continue;
+        }   
     }
-    if(Fall==2){ //Regen
-        while(F->next!=NULL){
-            int Tag=0;
-            Serial.print("T");
-            if((F->liter)>(F->next->liter)){//Wenn es weniger geworden ist
-                if(F->next->unix!=0){ //ignoriert die null einträge
-                Summe+=(F->liter)-(F->next->liter); //differenz zur summe hinzu
-                }
-                if(F->next->unix!=0&&Tag!=day(F->unix)){ //ignoriert die null einträge und ermöglicht den Zähler nur einmal am Tag erhöhen
-                    Zaehler++;
-                    Tag=day(F->unix);
-                }
-                Serial.println("F2");
-                Serial.println(F->Zaehler);
+    switch (Fall) { //Ausgabe
+        case 1: //Verbrauch
+            if(AnzahlWeg>0){
+                s+=SumWeg/AnzahlWeg;
+                break; 
+            }else{
+                s+="keine Angabe moeglich ";
+                break;
             }
-            F=F->next;
-        }
-        Serial.println(Summe);
-        Serial.println(Zaehler);
-        if(Zaehler>0){
-            Durchschnitt=Summe/Zaehler;
-            s+=(int)Durchschnitt;
-        }else{
-            s+= "keine Angabe moeglich ";
-        }
+        case 2://Regen
+            if(AnzahlHinzu>0){
+                s+=SumHinzu/AnzahlHinzu;
+                break; 
+            }else{
+                s+="keine Angabe moeglich ";
+                break;
+            }
+        case 3:s+=SumWeg;break; //Gesamt Verbrauch
+        case 4:s+=SumHinzu;break; //Gesammt Regen
     }
     return s;
 }
@@ -346,16 +347,17 @@ String getStatValue(struct Fuellstand* Liste){ //bietet die Daten für die Stat 
         s+=0;
     }
     s+=minute(Liste->unix);
-    s+="</p>";
-    s+="<p>Es gibt aktuell ";
+    s+="</p>\n <p>Es gibt aktuell ";
     s+=Liste->Zaehler;
-    s+=" Messanfragen.</p>";
-    s+="<p>Durchschnittlich werden am Tag ";
+    s+=" Messanfragen.</p>\n <p>Durchschnittlich werden am Tag ";
     s+=getDurchschnitt(Liste, 1);//"unbekannt"; //hier noch
-    s+="l entnommen.</p>";
-    s+="<p>Wenn es Regnet dann kommen durchschnittlich ";
+    s+="l entnommen.</p>\n <p>Wenn es Regnet dann kommen durchschnittlich ";
     s+=getDurchschnitt(Liste, 2);//"unbekannt";//hier noch
-    s+="l am Tag hinzu.</p></body></html>";
+    s+="l am Tag hinzu.\n <p>Insgesamt wurden ";
+    s+=getDurchschnitt(Liste, 3); //gesammt entnommen
+    s+="l entnommen.</p>\n <p>Insgesamt hat es ";
+    s+=getDurchschnitt(Liste, 4); //gesammt geregnet
+    s+="l geregnet.</p>\n </p></body></html>";
     return s;
 }
 
