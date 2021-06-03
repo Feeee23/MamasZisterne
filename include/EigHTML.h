@@ -66,11 +66,11 @@ const char StandartSeite2[] = R"rawliteral(
                     border-collapse: collapse;
                 }
             </style>
-            <title>Girke's Zisternen Fuellstand</title>
+            <title>Girke's Zisterne</title>
         </head>
 
         <body>
-            <h1>Girke's Zisternen Fuellstand</h1>
+            <h1>Girke's Zisterne</h1>
             <p>neue Abfrage:</p>
             <p><a href="/5/on"><button class="button">Start</button></a><a href='/'><button class="button" style='background-color:#228B22'>aktualisieren</button></a></p>
                 )rawliteral";
@@ -82,8 +82,9 @@ const char StandartSeite3[] = R"rawliteral(
                 <tr>
                     <th style='border-top:hidden;border-bottom:hidden;border-left-color:white'></th>
                     <th style='width:150px'>Datum</th>
-                    <th style='width:100px'>Fuellhoehe</th>
-                    <th style='width:100px'>Liter</th>
+                    <th style='width:70px'>Fuellh.</th>
+                    <th style='width:70px'>Liter</th>
+                    <th style='width:70px'>Delta</th>
                     <th style='border-top:hidden;border-bottom:hidden;border-right:hidden;'></th>
                 </tr>
     )rawliteral";
@@ -111,7 +112,7 @@ const char StandartSeite4[] = R"rawliteral(
             <a href='/7/on'><i class='fas fa-envelope-open-text fa-3x'style='color: green;' ;></i></a>
         </div>
         <div align='right'>
-            <p align='right'>Die aktuelle Version 2.0 des Quellcodes gibt es <a href='https://github.com/Feeee23/MamasZisterne'>hier</a></p>
+            <p align='right'>Die aktuelle Version 2.1 des Quellcodes gibt es <a href='https://github.com/Feeee23/MamasZisterne'>hier</a></p>
         </div>
         </body>
 
@@ -191,6 +192,7 @@ String SendAdminBereich(String Werte, String Header){
     s+="<p>";
     s+=Header;
     s+="</p>";
+    s+="<a href='/DataDump'><button class='button' style='background-color:#7591ce'>rawDataDump</button></a> <br><br>";
     s+="<a href='/logout'><button class='button' style='background-color:#228B22'>Ausloggen</button></a> <br><br>";
     s+="<a href='/reset'><button class='button' style='background-color: red'>reset</button></a><br><br>";
     s+="<a href='/Speicherleeren'><button class='button' style='background-color: violet'>Speicher Leeren</button></a>";
