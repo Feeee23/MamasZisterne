@@ -34,7 +34,7 @@ WiFiUDP ntpUDP; //Fuer die Package´s die von den Zeit Server zu holen sind
 long utcOffsetInSeconds = 3600; // offset von UTF zeit (zur Witerzeit, zur Sommerzeit erhöhen auf 7200)
 NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds); //Adresse und Client für die Zeit desfinieren
 
-EMailSender emailSend("girkeszisterne@gmail.com", "H9d*(%Q5Kh87"); //Email
+EMailSender emailSend("girkeszisterne@gmail.com", "PW_ÄNDERN"); //Email
 const char* empfaenger = "g.girke@gmx.de";
 const char* empfaenger2="girkeszisterne@gmail.com"; //zum selbst emailen
 EMailSender::EMailMessage messageVoll;
