@@ -9,13 +9,12 @@
 #include <EigHTML.h>
 #include <klassen.h>
 #include <Sensor.h>
-
-const char* ssid="YOUR_SSID";
-const char* password="YOUR_PASSWORD";
+#include<WiFiCredential.h> //Alle WiFi anmeldungen hier
 
 const char* AdminID="123";
 const char* AdminPW="456";
 char* Berechtigung="none";
+long AdminZeit=0;
 char buffer[100];
 String Key;
 
@@ -35,9 +34,9 @@ WiFiUDP ntpUDP; //Fuer die Package´s die von den Zeit Server zu holen sind
 long utcOffsetInSeconds = 3600; // offset von UTF zeit (zur Witerzeit, zur Sommerzeit erhöhen auf 7200)
 NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds); //Adresse und Client für die Zeit desfinieren
 
-EMailSender emailSend("YOUR_EMAIL_SENDER", "EMAIL_PASSWORD"); //Email
-const char* empfaenger = "YOUR_EMAIL_REICIVER";
-const char* empfaenger2="YOUR_EMAIL_SENDER"; //zum selbst emailen
+EMailSender emailSend("girkeszisterne@gmail.com", "H9d*(%Q5Kh87"); //Email
+const char* empfaenger = "g.girke@gmx.de";
+const char* empfaenger2="girkeszisterne@gmail.com"; //zum selbst emailen
 EMailSender::EMailMessage messageVoll;
 EMailSender::EMailMessage messageLeer;
 EMailSender::EMailMessage messageAnfrage;
@@ -47,6 +46,7 @@ int LED =15;
 
 void setup() {
   Serial.begin(115200);
+  WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   pinMode(LED, OUTPUT);
   while (WiFi.status() != WL_CONNECTED) {
@@ -68,7 +68,7 @@ void setup() {
   server.begin();
   //Emails Voll/Leer
   messageLeer.subject="Zisterne ist fast leer";
-  messageLeer.message="Die Zisterne nur noch unter 50cm voll.";
+  messageLeer.message="In der Zisterne nur noch weniger als 500l drin.";
   messageVoll.subject="Zisterne ist fast voll";
   messageVoll.message="Die Zisterne ist über 200cm voll";
 
@@ -102,7 +102,7 @@ void loop() {
     messageAnfrage.subject="Anfrage Zisternenfüllstand"; //Tägliche email an sich selber damit das Google Konto nocht die Einstellungen ändert
     messageAnfrage.message=EmailAnfrage(Liste);
     EMailSender::Response resp=emailSend.send(empfaenger2, messageAnfrage);
-    if (F<50){ //wenn fast leer
+    if (L<500){ //wenn fast leer
       EMailSender::Response resp=emailSend.send(empfaenger, messageLeer);
     } else if (F>200){ //wenn fast voll
       EMailSender::Response resp=emailSend.send(empfaenger, messageVoll);
@@ -134,9 +134,9 @@ void loop() {
             client.println("Connection: close");
             client.println();
             
-            if(header.indexOf("logout")>=0 &&strcmp(Berechtigung, "none")!=0){
+            if((header.indexOf("logout")>=0 &&strcmp(Berechtigung, "none")!=0)||((timeClient.getEpochTime()-AdminZeit)>300)){
               Berechtigung="none";
-              continue;
+              //continue;
             }            
             if (header.indexOf("GET /6/on") >= 0) { //Sommer/Winterzeit button //Wenn Button aktiv -> Sommerzeit
                j=3600;
@@ -172,6 +172,15 @@ void loop() {
               Serial.println("reset");
               ESP.reset();
             }
+            if(header.indexOf("GET /DataDump")>=0){
+              client.println("---------------------------Speicher Werte---------------------------\n");
+              client.println(getAdminValue(Liste, SpeicherPos));
+              client.println("---------------------------Alle Tabellen Werte---------------------------\n");
+              client.println(getTabellenWerte(Liste));
+              client.println("---------------------------Alle Diagramm Werte---------------------------\n");
+              client.println(getDiagramWerte(Liste));
+              continue;
+            }
             if(header.indexOf("GET /Speicherleeren")>=0){ //EEPROM Speicher leer machen
               Serial.println("Speicher Leeren");
               EEPROM.write(SpeicherPos, 1); // Speicher leeren
@@ -180,7 +189,8 @@ void loop() {
               }
               EEPROM.commit();
             }       
-            if(strcmp(Berechtigung, "admin")==0){
+            if(strcmp(Berechtigung, "admin")==0)
+            {
               client.println(SendAdminBereich(getAdminValue(Liste, SpeicherPos), header.c_str()));
               continue;
             }else{
@@ -199,6 +209,7 @@ void loop() {
               char* PW=strchr(resp, 61)+1;
               if(strcmp(PW,AdminPW)==0&&strcmp(UserN, AdminID)==0){
                 Berechtigung="admin";
+                AdminZeit=timeClient.getEpochTime();
                 delay(100);
                 continue;
               }
